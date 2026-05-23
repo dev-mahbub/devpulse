@@ -98,39 +98,34 @@ const updateIssue = async (req: Request, res: Response) => {
   }
 };
 
-// const updateIssue = async (req: Request, res: Response) => {
-//   const token = req.headers.authorization;
-//   if (!token) {
-//     return res.status(500).json({
-//       success: false,
-//       message: "Unauthorize access!",
-//     });
-//   }
-//   const { id } = req.params;
-//   try {
-//     const result = await issueService.updateIssueService(
-//       req.body,
-//       id as string,
-//       token as string,
-//     );
-
-//     sendResponse(res, {
-//       statusCode: 200,
-//       success: true,
-//       message: "Issue updated successfully",
-//       data: result.rows[0],
-//     });
-//   } catch (error: any) {
-//     res.status(500).json({
-//       message: error.message,
-//       error: error,
-//     });
-//   }
-// };
+const deleteIssue = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const result = await issueService.deleteIssue(id as string);
+    if (result.rows.length === 0) {
+      sendResponse(res, {
+        statusCode: 404,
+        success: false,
+        message: "User not found",
+      });
+    }
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Issue deleted successfully",
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
 export const issueController = {
   createIssue,
   getAllIssues,
   getSingleIssue,
   updateIssue,
+  deleteIssue,
 };
