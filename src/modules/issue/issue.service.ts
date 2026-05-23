@@ -117,7 +117,33 @@ const getSingleIssue = async (id: string) => {
   return formatted;
 };
 
-const updateIssueService = async (id: string) => {};
+//update issue
+const updateIssueService = async (
+  payload: IIssue,
+  id: string,
+  token: string,
+) => {
+  console.log("payload", id);
+  const { title, description, type } = payload;
+
+  jwt.verify(token, config.secret as string);
+
+  const result = await pool.query(
+    `
+    UPDATE issues
+    SET
+    title = COALESCE($1, title),
+    description = COALESCE($2, description),
+    type = COALESCE($3, type),
+    updated_at = NOW()
+    WHERE id = $4
+    RETURNING *
+    `,
+    [title, description, type, id],
+  );
+
+  return result.rows[0];
+};
 
 export const issueService = {
   createIssueService,

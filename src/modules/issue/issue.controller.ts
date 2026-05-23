@@ -66,11 +66,67 @@ const getSingleIssue = async (req: Request, res: Response) => {
 };
 
 const updateIssue = async (req: Request, res: Response) => {
+  const token = req.headers.authorization;
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized access!",
+    });
+  }
+
   const { id } = req.params;
+
   try {
-    const result = await issueService.updateIssueService(id as string);
-  } catch (error) {}
+    const result = await issueService.updateIssueService(
+      req.body,
+      id as string,
+      token,
+    );
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Issue updated successfully",
+      data: result,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Something went wrong",
+    });
+  }
 };
+
+// const updateIssue = async (req: Request, res: Response) => {
+//   const token = req.headers.authorization;
+//   if (!token) {
+//     return res.status(500).json({
+//       success: false,
+//       message: "Unauthorize access!",
+//     });
+//   }
+//   const { id } = req.params;
+//   try {
+//     const result = await issueService.updateIssueService(
+//       req.body,
+//       id as string,
+//       token as string,
+//     );
+
+//     sendResponse(res, {
+//       statusCode: 200,
+//       success: true,
+//       message: "Issue updated successfully",
+//       data: result.rows[0],
+//     });
+//   } catch (error: any) {
+//     res.status(500).json({
+//       message: error.message,
+//       error: error,
+//     });
+//   }
+// };
 
 export const issueController = {
   createIssue,
