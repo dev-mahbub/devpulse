@@ -95,7 +95,7 @@ const getSingleIssue = async (id: string) => {
   );
 
   // reporter logic
-  const reporterId = result.rows[0].id;
+  const reporterId = result.rows[0].reporter_id;
 
   const usersResult = await pool.query(
     `SELECT id, name, role FROM users WHERE id= $1`,

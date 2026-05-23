@@ -20,7 +20,6 @@ const auth = (...roles: ROLES[]) => {
     ) as JwtPayload;
 
     const { id } = decoded;
-    console.log("id", id);
 
     const userData = await pool.query(
       `
