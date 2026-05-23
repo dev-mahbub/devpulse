@@ -117,33 +117,114 @@ const getSingleIssue = async (id: string) => {
   return formatted;
 };
 
-//update issue
 const updateIssueService = async (
   payload: IIssue,
-  id: string,
+  issueId: string,
   token: string,
 ) => {
-  console.log("payload", id);
   const { title, description, type } = payload;
 
-  jwt.verify(token, config.secret as string);
+  const decoded = jwt.verify(token, config.secret as string) as JwtPayload;
 
+  const userId = decoded.id;
+
+  // 1. get user
+  const userResult = await pool.query(`SELECT * FROM users WHERE id=$1`, [
+    userId,
+  ]);
+
+  const user = userResult.rows[0];
+
+  // 2. get issue
+  const issueResult = await pool.query(`SELECT * FROM issues WHERE id=$1`, [
+    issueId,
+  ]);
+
+  const issue = issueResult.rows[0];
+
+  if (!issue) {
+    throw new Error("Issue not found");
+  }
+
+  // 3. AUTH RULES
+  if (user.role === "contributor") {
+    if (issue.reporter_id !== userId) {
+      throw new Error("You can only update your own issues");
+    }
+
+    if (issue.status !== "open") {
+      throw new Error("You can only update open issues");
+    }
+  }
+
+  // 4. UPDATE
   const result = await pool.query(
     `
     UPDATE issues
     SET
-    title = COALESCE($1, title),
-    description = COALESCE($2, description),
-    type = COALESCE($3, type),
-    updated_at = NOW()
+      title = COALESCE($1, title),
+      description = COALESCE($2, description),
+      type = COALESCE($3, type),
+      updated_at = NOW()
     WHERE id = $4
     RETURNING *
     `,
-    [title, description, type, id],
+    [title, description, type, issueId],
   );
 
   return result.rows[0];
 };
+
+// //update issue
+// const updateIssueService = async (
+//   payload: IIssue,
+//   id: string,
+//   token: string,
+// ) => {
+//   const { title, description, type } = payload;
+
+//   const decoded = jwt.verify(
+//     token as string,
+//     config.secret as string,
+//   ) as JwtPayload;
+
+//   const userId = decoded.id;
+
+//   const userData = await pool.query(
+//     `
+//         SELECT * FROM users WHERE id=$1
+//         `,
+//     [userId],
+//   );
+
+//   const user = userData.rows[0];
+
+//   const issueResult = await pool.query(
+//     `SELECT * FROM issues WHERE id=$1`,
+//     [id],
+//   );
+//   const issue = issueResult.rows[0];
+
+//   if (!issue) {
+//     throw new Error("Issue not found");
+//   }
+
+//   const result = await pool.query(
+//     `
+//     UPDATE issues
+//     SET
+//     title = COALESCE($1, title),
+//     description = COALESCE($2, description),
+//     type = COALESCE($3, type),
+//     updated_at = NOW()
+//     WHERE id = $4
+//     RETURNING *
+//     `,
+//     [title, description, type, id],
+//   );
+
+//   return result.rows[0];
+// };
 
 export const issueService = {
   createIssueService,
